@@ -25,8 +25,8 @@
         since less powerful devices may not be able to initiate the process
         in time when the process is killed and an incoming call is received.
     -->
-    <application>
+    <application
         android:persistent="true"
-        android:hasCode="false"
+        android:hasCode="false" >
     </application>
 </manifest>
