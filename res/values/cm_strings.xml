@@ -30,4 +30,10 @@
     <!-- Blacklist confirmation dialog -->
     <string name="blacklist_dialog_title">Add to blacklist</string>
     <string name="blacklist_dialog_message">Future calls from <xliff:g id="number">%s</xliff:g> will be blocked</string>
+
+    <!-- Description label for answering a call on speakerphone -->
+    <string name="description_target_speaker">Answer on Speakerphone</string>
+
+    <!-- Description of the down direction in which one can to slide the handle in the phone answer screen. [CHAR LIMIT=NONE] -->
+    <string name="description_direction_down">Slide down for <xliff:g id="target_description" example="Unlock">%s</xliff:g>.</string>
 </resources>
