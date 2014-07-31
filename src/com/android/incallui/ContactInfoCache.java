@@ -515,8 +515,8 @@ public class ContactInfoCache implements ContactsAsyncHelper.OnImageLoadComplete
         cce.label = label;
         cce.isSipCall = isSipCall;
 
-        if (isIncoming && Settings.AOKP.getInt(context.getContentResolver(),
-                Settings.AOKP.DETAILED_INCALL_INFO, 0) == 1) {
+        if (isIncoming && Settings.System.getInt(context.getContentResolver(),
+                Settings.System.DETAILED_INCALL_INFO, 0) == 1) {
             getDetailedInfo(info.person_id, cce, context);
         }
     }
