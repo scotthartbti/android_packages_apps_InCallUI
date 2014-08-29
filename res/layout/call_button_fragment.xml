@@ -170,6 +170,14 @@
         <View android:id="@+id/blacklistSpacer"
               style="@style/VerticalSeparator" />
 
+        <com.android.incallui.CallRecordingButton
+                     android:id="@+id/recordButton"
+                     style="@style/InCallButton"
+                     android:src="@drawable/ic_record_holo_dark"
+                     android:contentDescription="@string/onscreenRecordText"
+                     android:visibility="gone"
+                />
+
         <!-- "Blacklist" -->
         <!-- The button used for toggling blackist. -->
         <ImageButton android:id="@+id/addBlacklistButton"

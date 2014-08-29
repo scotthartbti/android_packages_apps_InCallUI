@@ -18,11 +18,11 @@ package com.android.incallui;
 
 import android.animation.LayoutTransition;
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.text.format.DateUtils;
+import android.util.AttributeSet;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -55,6 +55,7 @@ public class CallCardFragment extends BaseFragment<CallCardPresenter, CallCardPr
     private TextView mProviderLabel;
     private TextView mProviderNumber;
     private ViewGroup mSupplementaryInfoContainer;
+    private TextView mCallRecordingTimer;
 
     // Secondary caller info
     private ViewStub mSecondaryCallInfo;
@@ -64,6 +65,29 @@ public class CallCardFragment extends BaseFragment<CallCardPresenter, CallCardPr
 
     // Cached DisplayMetrics density.
     private float mDensity;
+
+    private CallRecorder.RecordingProgressListener mRecordingProgressListener =
+            new CallRecorder.RecordingProgressListener() {
+        @Override
+        public void onStartRecording() {
+            mCallRecordingTimer.setText(DateUtils.formatElapsedTime(0));
+            mCallRecordingTimer.setVisibility(View.VISIBLE);
+        }
+
+        @Override
+        public void onStopRecording() {
+            mCallRecordingTimer.setVisibility(View.GONE);
+        }
+
+        @Override
+        public void onRecordingTimeProgress(final long elapsedTimeMs) {
+            long elapsedSeconds = (elapsedTimeMs + 500) / 1000;
+            mCallRecordingTimer.setText(DateUtils.formatElapsedTime(elapsedSeconds));
+
+            // make sure this is visible in case we re-loaded the UI for a call in progress
+            mCallRecordingTimer.setVisibility(View.VISIBLE);
+        }
+    };
 
     @Override
     CallCardPresenter.CallCardUi getUi() {
@@ -117,6 +141,19 @@ public class CallCardFragment extends BaseFragment<CallCardPresenter, CallCardPr
         mProviderNumber = (TextView) view.findViewById(R.id.providerAddress);
         mSupplementaryInfoContainer =
             (ViewGroup) view.findViewById(R.id.supplementary_info_container);
+
+        mCallRecordingTimer = (TextView) view.findViewById(R.id.callRecordingTimer);
+
+        CallRecorder recorder = CallRecorder.getInstance();
+        recorder.addRecordingProgressListener(mRecordingProgressListener);
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        CallRecorder recorder = CallRecorder.getInstance();
+        recorder.removeRecordingProgressListener(mRecordingProgressListener);
     }
 
     @Override
