@@ -116,9 +116,6 @@
     <dimen name="glowpadview_margin_bottom">-48dip</dimen>
     <dimen name="glowpadview_margin_right">0dip</dimen>
 
-    <!-- Height of the in-call card -->
-    <dimen name="incoming_call_card_height">112dip</dimen>
-
     <!-- Text dimensions for dialpad keys -->
     <dimen name="dialpad_key_numbers_size">40sp</dimen>
     <dimen name="dialpad_key_letters_size">13sp</dimen>
