@@ -18,10 +18,6 @@ package com.android.incallui;
 
 import android.content.Context;
 import android.content.res.Configuration;
-import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
-import android.hardware.SensorManager;
 import android.os.PowerManager;
 import android.provider.Settings;
 import android.telecom.AudioState;
@@ -29,7 +25,6 @@ import android.telecom.AudioState;
 import com.android.incallui.AudioModeProvider.AudioModeListener;
 import com.android.incallui.InCallPresenter.InCallState;
 import com.android.incallui.InCallPresenter.InCallStateListener;
-import com.android.services.telephony.common.AudioMode;
 import com.google.common.base.Objects;
 
 /**
@@ -42,21 +37,17 @@ import com.google.common.base.Objects;
  * public methods.
  */
 public class ProximitySensor implements AccelerometerListener.OrientationListener,
-        InCallStateListener, AudioModeListener, SensorEventListener {
+        InCallStateListener, AudioModeListener {
     private static final String TAG = ProximitySensor.class.getSimpleName();
 
     private static final String PROXIMITY_SENSOR = "proximity_sensor";
 
     private final PowerManager mPowerManager;
-    private SensorManager mSensor;
-    private Sensor mProxSensor;
     private final AudioModeProvider mAudioModeProvider;
     private final AccelerometerListener mAccelerometerListener;
     private int mOrientation = AccelerometerListener.ORIENTATION_UNKNOWN;
     private boolean mUiShowing = false;
-    private boolean mIsPhoneOutgoing = false;
     private boolean mIsPhoneOffhook = false;
-    private boolean mProximitySpeaker = false;
     private boolean mDialpadVisible;
     private Context mContext;
 
@@ -66,17 +57,8 @@ public class ProximitySensor implements AccelerometerListener.OrientationListene
 
     public ProximitySensor(Context context, AudioModeProvider audioModeProvider) {
         mContext = context;
-        mPowerManager = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
-
-        if (mPowerManager.isWakeLockLevelSupported(PowerManager.PROXIMITY_SCREEN_OFF_WAKE_LOCK)) {
-            mSensor = (SensorManager) mContext.getSystemService(Context.SENSOR_SERVICE);
-            mProxSensor = mSensor.getDefaultSensor(Sensor.TYPE_PROXIMITY);
-        } else {
-            mProxSensor = null;
-            mSensor = null;
-        }
-
-        mAccelerometerListener = new AccelerometerListener(mContext, this);
+        mPowerManager = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
+        mAccelerometerListener = new AccelerometerListener(context, this);
         mAudioModeProvider = audioModeProvider;
         mAudioModeProvider.addListener(this);
     }
@@ -87,10 +69,6 @@ public class ProximitySensor implements AccelerometerListener.OrientationListene
         mAccelerometerListener.enable(false);
 
         TelecomAdapter.getInstance().turnOffProximitySensor(true);
-
-        if (mSensor != null) {
-            mSensor.unregisterListener(this);
-        }
     }
 
     /**
@@ -112,20 +90,13 @@ public class ProximitySensor implements AccelerometerListener.OrientationListene
         // can also put the in-call screen in the INCALL state.
         boolean hasOngoingCall = InCallState.INCALL == newState && callList.hasLiveCall();
         boolean isOffhook = (InCallState.OUTGOING == newState) || hasOngoingCall;
-        boolean isOutgoing = (InCallState.OUTGOING == newState);
 
         if (isOffhook != mIsPhoneOffhook) {
             mIsPhoneOffhook = isOffhook;
-            mIsPhoneOutgoing = isOutgoing;
 
             mOrientation = AccelerometerListener.ORIENTATION_UNKNOWN;
             mAccelerometerListener.enable(mIsPhoneOffhook);
 
-            updateProxSpeaker();
-            updateProximitySensorMode();
-        } else if (isOutgoing != mIsPhoneOutgoing) {
-            mIsPhoneOutgoing = isOutgoing;
-            updateProxSpeaker();
             updateProximitySensorMode();
         }
     }
@@ -144,22 +115,6 @@ public class ProximitySensor implements AccelerometerListener.OrientationListene
     @Override
     public void onAudioMode(int mode) {
         updateProximitySensorMode();
-    }
-
-    /**
-     * Proximity state changed
-     */
-    @Override
-    public void onSensorChanged(SensorEvent event) {
-        if (event.values[0] != mProxSensor.getMaximumRange()) {
-            setProxSpeaker(false);
-        } else {
-            setProxSpeaker(true);
-        }
-    }
-
-    @Override
-    public void onAccuracyChanged(Sensor sensor, int accuracy) {
     }
 
     public void onDialpadVisible(boolean visible) {
@@ -269,37 +224,5 @@ public class ProximitySensor implements AccelerometerListener.OrientationListene
                 // behavior in either case.
                 TelecomAdapter.getInstance().turnOffProximitySensor(screenOnImmediately);
             }
-    }
-
-    private void updateProxSpeaker() {
-        if (mSensor != null && mProxSensor != null) {
-            if (mIsPhoneOffhook) {
-                mSensor.registerListener(this, mProxSensor,
-                        SensorManager.SENSOR_DELAY_NORMAL);
-            } else {
-                mSensor.unregisterListener(this);
-            }
         }
-    }
-
-    private void setProxSpeaker(final boolean speaker) {
-        final int audioMode = mAudioModeProvider.getAudioMode();
-        if (mIsPhoneOffhook && Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.PROXIMITY_AUTO_SPEAKER, 0) == 1
-                && audioMode != AudioMode.WIRED_HEADSET
-                && audioMode != AudioMode.BLUETOOTH) {
-            if (speaker && audioMode != AudioMode.SPEAKER) {
-                if (Settings.System.getInt(mContext.getContentResolver(),
-                        Settings.System.PROXIMITY_AUTO_SPEAKER_INCALL_ONLY, 0) == 0
-                        || (Settings.System.getInt(mContext.getContentResolver(),
-                        Settings.System.PROXIMITY_AUTO_SPEAKER_INCALL_ONLY, 0) == 1
-                        && !mIsPhoneOutgoing)) {
-                    TelecomAdapter.getInstance().setAudioRoute(AudioMode.SPEAKER);
-                }
-            } else if (!speaker) {
-                TelecomAdapter.getInstance().setAudioRoute(AudioMode.EARPIECE);
-                updateProximitySensorMode();
-            }
-        }
-    }
 }
