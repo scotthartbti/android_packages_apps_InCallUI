@@ -598,7 +598,6 @@ public class InCallPresenter implements CallList.Listener,
     @Override
     public void onImageLoadComplete(String callId, ContactInfoCache.ContactCacheEntry entry) {
         // Stub
->>>>>>> 7ae53c9c288486880976cf8e09d2941ada0e77f2
     }
 
     /**
