@@ -93,6 +93,7 @@ public class InCallActivity extends Activity implements FragmentDisplayManager {
     private static final int SNACKBAR_TIMEOUT = 10000; // 10 seconds auto dismiss
 
     private CallButtonFragment mCallButtonFragment;
+    private ModButtonFragment mModButtonFragment;
     private CallCardFragment mCallCardFragment;
     private AnswerFragment mAnswerFragment;
     private DialpadFragment mDialpadFragment;
@@ -128,6 +129,9 @@ public class InCallActivity extends Activity implements FragmentDisplayManager {
     private Animation mSlideOut;
     private boolean mDismissKeyguard = false;
 
+    /** Flag indicating if we are exiting fast because service is not bound. */
+    private boolean mExitFast = false;
+
     private final int TAB_COUNT_ONE = 1;
     private final int TAB_COUNT_TWO = 2;
     private final int TAB_POSITION_FIRST = 0;
@@ -160,6 +164,13 @@ public class InCallActivity extends Activity implements FragmentDisplayManager {
         Log.d(this, "onCreate()...  this = " + this);
 
         super.onCreate(icicle);
+
+        if (InCallServiceImpl.mTelephonyManager == null) {
+            // Service is not bound. We shouldn't be here. Exit.
+            mExitFast = true;
+            finish();
+            return;
+        }
 
         // set this flag so this activity will stay in front of the keyguard
         // Have the WindowManager filter out touch events that are "too fat".
@@ -346,8 +357,10 @@ public class InCallActivity extends Activity implements FragmentDisplayManager {
     @Override
     protected void onDestroy() {
         Log.d(this, "onDestroy()...  this = " + this);
-        InCallPresenter.getInstance().unsetActivity(this);
-        InCallPresenter.getInstance().updateIsChangingConfigurations();
+        if (!mExitFast) {
+            InCallPresenter.getInstance().unsetActivity(this);
+            InCallPresenter.getInstance().updateIsChangingConfigurations();
+        }
         super.onDestroy();
     }
 
@@ -371,6 +384,8 @@ public class InCallActivity extends Activity implements FragmentDisplayManager {
             mConferenceManagerFragment = (ConferenceManagerFragment) fragment;
         } else if (fragment instanceof CallButtonFragment) {
             mCallButtonFragment = (CallButtonFragment) fragment;
+        } else if (fragment instanceof ModButtonFragment) {
+            mModButtonFragment = (ModButtonFragment) fragment;
         }
     }
 
@@ -1036,6 +1051,27 @@ public class InCallActivity extends Activity implements FragmentDisplayManager {
             return;
         }
         mInviteSnackbar = Snackbar.make(rootView, inviteText, SNACKBAR_TIMEOUT);
+        mInviteSnackbar.setCallback(new Snackbar.Callback() {
+            @Override
+            public void onDismissed(Snackbar snackbar, int event) {
+                if (DEBUG) {
+                    Log.d(TAG, "Snackbar.Callback.onDismissed");
+                }
+                if (mCallCardFragment != null) {
+                    mCallCardFragment.updateFabPosition();
+                }
+            }
+
+            @Override
+            public void onShown(Snackbar snackbar) {
+                if (DEBUG) {
+                    Log.d(TAG, "Snackbar.Callback.onShown");
+                }
+                if (mCallCardFragment != null) {
+                    mCallCardFragment.updateFabPosition(snackbar.getView().getHeight());
+                }
+            }
+        });
         if (inviteIntent != null) {
             mInviteSnackbar.setActionTextColor(getResources()
                     .getColor(R.color.snackbar_action_text_color))
@@ -1047,27 +1083,6 @@ public class InCallActivity extends Activity implements FragmentDisplayManager {
                             } catch (PendingIntent.CanceledException e) {
                                 Log.e(TAG, "Caught CanceledException from InCall Plugin invite" +
                                         " intent", e);
-                            }
-                        }
-                    })
-                    .setCallback(new Snackbar.Callback() {
-                        @Override
-                        public void onDismissed(Snackbar snackbar, int event) {
-                            if (DEBUG) {
-                                Log.d(TAG, "Snackbar.Callback.onDismissed");
-                            }
-                            if (mCallCardFragment != null) {
-                                mCallCardFragment.updateFabPosition();
-                            }
-                        }
-
-                        @Override
-                        public void onShown(Snackbar snackbar) {
-                            if (DEBUG) {
-                                Log.d(TAG, "Snackbar.Callback.onShown");
-                            }
-                            if (mCallCardFragment != null) {
-                                mCallCardFragment.updateFabPosition(snackbar.getView().getHeight());
                             }
                         }
                     });

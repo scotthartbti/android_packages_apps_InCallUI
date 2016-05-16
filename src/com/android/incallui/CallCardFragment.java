@@ -132,6 +132,7 @@ public class CallCardFragment extends BaseFragment<CallCardPresenter, CallCardPr
     // Container view that houses the primary call information
     private ViewGroup mPrimaryCallInfo;
     private View mCallButtonsContainer;
+    private View mModButtonsContainer;
     private TextView mRecordingTimeLabel;
     private TextView mRecordingIcon;
 
@@ -148,7 +149,8 @@ public class CallCardFragment extends BaseFragment<CallCardPresenter, CallCardPr
 
     private View mPhotoContainer;
     private TextView mLookupStatusMessage;
-    private TextView mContactInfoAttribution;
+    private TextView mContactInfoAttributionText;
+    private ImageView mContactInfoAttributionLogo;
     private TextView mSpamInfoView;
 
     // Dark number info bar
@@ -284,6 +286,7 @@ public class CallCardFragment extends BaseFragment<CallCardPresenter, CallCardPr
         mPrimaryCallCardContainer = view.findViewById(R.id.primary_call_info_container);
         mPrimaryCallInfo = (ViewGroup) view.findViewById(R.id.primary_call_banner);
         mCallButtonsContainer = view.findViewById(R.id.callButtonFragment);
+        mModButtonsContainer = view.findViewById(R.id.modButtonFragment);
         mInCallMessageLabel = (TextView) view.findViewById(R.id.connectionServiceMessage);
         mProgressSpinner = view.findViewById(R.id.progressSpinner);
 
@@ -331,7 +334,8 @@ public class CallCardFragment extends BaseFragment<CallCardPresenter, CallCardPr
         mCallSubject = (TextView) view.findViewById(R.id.callSubject);
 
         mLookupStatusMessage = (TextView) view.findViewById(R.id.lookupStatusMessage);
-        mContactInfoAttribution = (TextView) view.findViewById(R.id.contactInfoAttribution);
+        mContactInfoAttributionText = (TextView) view.findViewById(R.id.contactInfoAttributionText);
+        mContactInfoAttributionLogo = (ImageView) view.findViewById(R.id.contactInfoAttributionLogo);
         mSpamInfoView = (TextView) view.findViewById(R.id.spamInfo);
         mPhotoContainer = view.findViewById(R.id.call_card_content);
 
@@ -1225,6 +1229,7 @@ public class CallCardFragment extends BaseFragment<CallCardPresenter, CallCardPr
             mPrimaryCallCardContainer.setBackgroundColor(themeColors.mPrimaryColor);
         }
         mCallButtonsContainer.setBackgroundColor(themeColors.mPrimaryColor);
+        mModButtonsContainer.setBackgroundColor(themeColors.mSecondaryColor);
         mCallSubject.setTextColor(themeColors.mPrimaryColor);
 
         mCurrentThemeColors = themeColors;
@@ -1272,6 +1277,7 @@ public class CallCardFragment extends BaseFragment<CallCardPresenter, CallCardPr
                 mFloatingActionButtonController.setScreenWidth(parent.getWidth());
 
                 mCallButtonsContainer.setAlpha(0);
+                mModButtonsContainer.setAlpha(0);
                 mCallStateLabel.setAlpha(0);
                 mPrimaryName.setAlpha(0);
                 mCallTypeLabel.setAlpha(0);
@@ -1283,6 +1289,7 @@ public class CallCardFragment extends BaseFragment<CallCardPresenter, CallCardPr
                 assignTranslateAnimation(mCallNumberAndLabel, 3);
                 assignTranslateAnimation(mCallTypeLabel, 4);
                 assignTranslateAnimation(mCallButtonsContainer, 5);
+                assignTranslateAnimation(mModButtonsContainer, 6);
 
                 final Animator animator = getShrinkAnimator(parent.getHeight(), originalHeight);
 
@@ -1326,13 +1333,9 @@ public class CallCardFragment extends BaseFragment<CallCardPresenter, CallCardPr
         } else {
             switch (lookupStatus) {
                 case SUCCESS:
-                    mContactInfoAttribution.setText(
+                    mContactInfoAttributionText.setText(
                             res.getString(R.string.powered_by_provider, providerName));
-                    int logoSize = res.getDimensionPixelSize(R.dimen.contact_info_attribution_logo_size);
-                    int logoPadding = res.getDimensionPixelSize(R.dimen.contact_info_attribution_logo_padding);
-                    providerLogo.setBounds(0, 0, logoSize, logoSize);
-                    mContactInfoAttribution.setCompoundDrawablesRelative(providerLogo, null, null, null);
-                    mContactInfoAttribution.setCompoundDrawablePadding(logoPadding);
+                    mContactInfoAttributionLogo.setImageDrawable(providerLogo);
                     showContactAttribution = true;
                     showLookupStatus = false;
                     break;
@@ -1360,7 +1363,7 @@ public class CallCardFragment extends BaseFragment<CallCardPresenter, CallCardPr
             }
         }
         mLookupStatusMessage.setVisibility(showLookupStatus ? View.VISIBLE : View.GONE);
-        mContactInfoAttribution.setVisibility(showContactAttribution ? View.VISIBLE : View.GONE);
+        mContactInfoAttributionText.setVisibility(showContactAttribution ? View.VISIBLE : View.GONE);
     }
 
     public void onDialpadVisibilityChange(boolean isShown) {
@@ -1480,6 +1483,7 @@ public class CallCardFragment extends BaseFragment<CallCardPresenter, CallCardPr
 
     private void setViewStatePostAnimation(OnLayoutChangeListener layoutChangeListener) {
         setViewStatePostAnimation(mCallButtonsContainer);
+        setViewStatePostAnimation(mModButtonsContainer);
         setViewStatePostAnimation(mCallStateLabel);
         setViewStatePostAnimation(mPrimaryName);
         setViewStatePostAnimation(mCallTypeLabel);
